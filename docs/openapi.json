@@ -1,0 +1,1200 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Forum API",
+    "description": "REST API documentation for the forum project. Authentication is handled via a session cookie (`session_token`) set upon login. Endpoints that require authentication are marked with the `cookieAuth` security scheme.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "User profile management"
+    },
+    {
+      "name": "Auth",
+      "description": "User registration and authentication"
+    },
+    {
+      "name": "Posts",
+      "description": "Creating, reading, updating, and deleting forum posts"
+    },
+    {
+      "name": "Comments",
+      "description": "Creating, reading, updating, and deleting comments on posts"
+    },
+    {
+      "name": "Reactions",
+      "description": "Liking and disliking posts and comments"
+    },
+    {
+      "name": "Categories",
+      "description": "Fetching available post categories and posts in categories"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session_token",
+        "description": "Session UUID cookie set upon successful login. Has an expiration date. Only one active session per user is allowed at a time."
+      }
+    },
+    "schemas": {
+      "PublicUser": {
+        "type": "object",
+        "description": "Public-facing user information, stripped of sensitive data.",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "avatar_path": { "type": "string", "format": "uri-reference" },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "examples": [
+          {
+            "id": 1,
+            "username": "john_doe",
+            "avatar_path": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000.png",
+            "created_at": "2024-01-15T10:30:00Z"
+          }
+        ]
+      },
+      "PrivateUser": {
+        "type": "object",
+        "description": "Full user information, only accessible to the authenticated user themselves.",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "avatar_path": { "type": "string", "format": "uri-reference" },
+          "created_at": { "type": "string", "format": "date-time" }
+        },
+        "examples": [
+          {
+            "id": 1,
+            "username": "john_doe",
+            "email": "john@example.com",
+            "avatar_path": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000.png",
+            "created_at": "2024-01-15T10:30:00Z"
+          }
+        ]
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "image_path": { "type": "string", "format": "uri-reference" },
+          "content": { "type": "string" },
+          "author": { "$ref": "#/components/schemas/PublicUser" },
+          "categories": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Category" }
+          },
+          "likes": { "type": "integer" },
+          "dislikes": { "type": "integer" },
+          "comment_count": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "examples": [
+          {
+            "id": 42,
+            "title": "My first post",
+            "content": "This is the body of the post.",
+            "image_path": "/uploads/posts/550e8400-e29b-41d4-a716-446655440010.png",
+            "author": {
+              "id": 1,
+              "username": "john_doe",
+              "avatar_path": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000.png",
+              "created_at": "2024-01-15T10:30:00Z"
+            },
+            "categories": [{ "id": 3, "name": "Technology" }],
+            "likes": 10,
+            "dislikes": 2,
+            "comment_count": 5,
+            "created_at": "2024-01-15T10:30:00Z",
+            "updated_at": "2024-01-16T08:00:00Z"
+          }
+        ]
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "post_id": { "type": "integer" },
+          "author": { "$ref": "#/components/schemas/PublicUser" },
+          "content": { "type": "string" },
+          "likes": { "type": "integer" },
+          "dislikes": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        },
+        "examples": [
+          {
+            "id": 7,
+            "post_id": 42,
+            "author": {
+              "id": 1,
+              "username": "john_doe",
+            "avatar_path": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000.png",
+              "created_at": "2024-01-15T10:30:00Z"
+            },
+            "content": "Great post!",
+            "likes": 3,
+            "dislikes": 0,
+            "created_at": "2024-01-15T12:00:00Z",
+            "updated_at": "2024-01-15T12:30:00Z"
+          }
+        ]
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        },
+        "examples": [{ "id": 3, "name": "Technology" }]
+      },
+      "ReactionType": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["like", "dislike"],
+            "description": "The reaction type. Sending the same reaction again removes it (toggle). Sending the opposite reaction switches it. A resource cannot be liked and disliked simultaneously by the same user."
+          }
+        },
+        "examples": [{ "type": "like" }]
+      },
+      "Response": {
+        "type": "object",
+        "description": "Standard response wrapper used for all API responses. On success, `data` contains the returned payload. On error, `data` is omitted.",
+        "required": ["status", "message"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Indicates whether the request succeeded or failed.",
+            "enum": ["success", "error"]
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable description of the result."
+          },
+          "data": {
+            "description": "The response payload. Present on success; omitted on error."
+          }
+        },
+        "examples": [
+          { "status": "error", "message": "A human-readable error message." },
+          { "status": "success", "message": "Request completed successfully.", "data": {} }
+        ]
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Unauthorized - Missing or expired session cookie.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Response" },
+            "examples": {
+              "unauthorized": {
+                "value": {
+                  "status": "error",
+                  "message": "You must be logged in to perform this action."
+                }
+              }
+            }
+          }
+        },
+        "headers": {
+          "Set-Cookie": {
+            "description": "Clears the session cookie. Example: `Set-Cookie: session_token=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT`",
+            "schema": { "type": "string" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - You do not have permission to modify this resource.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Response" },
+            "examples": {
+              "forbidden": {
+                "value": {
+                  "status": "error",
+                  "message": "You are not allowed to modify this resource."
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - The requested resource does not exist.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Response" },
+            "examples": {
+              "notFound": {
+                "value": { "status": "error", "message": "Resource not found." }
+              }
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Bad Request - The request body or parameters are invalid.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Response" },
+            "examples": {
+              "badRequest": {
+                "value": { "status": "error", "message": "Field 'title' must not be empty." }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error - An unexpected error occurred on the server.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Response" },
+            "examples": {
+              "internalServerError": {
+                "value": { "status": "error", "message": "An internal server error occurred." }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/categories": {
+      "get": {
+        "tags": ["Categories"],
+        "summary": "Get all categories",
+        "description": "Returns the list of all available post categories. Public endpoint, no authentication required.",
+        "responses": {
+          "200": {
+            "description": "A list of categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the category.",
+          "schema": { "type": "integer", "examples": [23] }
+        }
+      ],
+      "get": {
+        "tags": ["Categories"],
+        "summary": "Get all posts in a category",
+        "description": "Returns the list of all available posts in the category. Public endpoint, no authentication required.",
+        "responses": {
+          "200": {
+            "description": "A list of categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Post" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users",
+        "description": "Returns a list of all registered users. Personal information (e.g. email) is omitted.",
+        "responses": {
+          "200": {
+            "description": "List of all users on the platform.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/PublicUser" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "description": "Creates a new user account. Both the email and username must be unique. Passwords are stored encrypted using bcrypt.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "username", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "username": { "type": "string", "minLength": 1 },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Plain-text password. It will be hashed with bcrypt before storage."
+                  }
+                },
+                "examples": [
+                  {
+                    "email": "john@example.com",
+                    "username": "john_doe",
+                    "password": "s3cr3tP@ssword"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PublicUser" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - A required field is missing/empty, or the email/username is already taken.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Response" },
+                "examples": {
+                  "emailTaken": {
+                    "value": { "status": "error", "message": "Email is already taken." }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login and establish a session",
+        "description": "Authenticates a user with their email and password. On success, a `session_token` cookie containing a UUID is set. Each user may only have one active session at a time; logging in invalidates any previous session for that user.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                },
+                "examples": [
+                  { "email": "john@example.com", "password": "s3cr3tP@ssword" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful. Session cookie is set in the response.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Session UUID cookie with an expiration date. Example: `session_token=<uuid>; Path=/; HttpOnly; Expires=<date>`",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PrivateUser" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": {
+            "description": "Unauthorized - Incorrect email or password.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Response" },
+                "examples": {
+                  "invalidCredentials": {
+                    "value": { "status": "error", "message": "Invalid email or password." }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the user.",
+          "schema": { "type": "integer", "examples": [1] }
+        }
+      ],
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get a user by ID",
+        "description": "Returns public profile information for a specific user. Personal information (e.g. email) is omitted.",
+        "responses": {
+          "200": {
+            "description": "Public details of the requested user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PublicUser" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get the current authenticated user",
+        "description": "Returns full profile details (including email) of the currently logged-in user.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Details of the authenticated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PrivateUser" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update the current authenticated user",
+        "description": "Allows the authenticated user to update their own username, email, or password. At least one field must be provided.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "At least one field must be provided.",
+                "properties": {
+                  "username": { "type": "string", "minLength": 1 },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 1 }
+                },
+                "examples": [
+                  {
+                    "username": "new_username",
+                    "email": "new@example.com",
+                    "password": "newP@ssword"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/PrivateUser" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete the current authenticated user",
+        "description": "Permanently deletes the account of the currently authenticated user along with all their posts, comments, and reactions.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "204": {
+            "description": "User deleted successfully. No content returned."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout the current authenticated user",
+        "description": "Invalidates the current session. The `session_token` cookie is cleared. The user must log in again to create a new session.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "204": {
+            "description": "Logged out successfully. Session cookie cleared. No content returned."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/users/me/posts": {
+      "get": {
+        "tags": ["Users", "Posts"],
+        "summary": "Get all posts created by the current user",
+        "description": "Returns all posts authored by the currently authenticated user. Corresponds to the 'My Posts' filter.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "A list of posts created by the authenticated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Post" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/users/me/comments": {
+      "get": {
+        "tags": ["Users", "Comments"],
+        "summary": "Get all comments created by the current user",
+        "description": "Returns all comments authored by the currently authenticated user.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "A list of comments created by the authenticated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Comment" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/users/me/likes": {
+      "get": {
+        "tags": ["Users", "Reactions"],
+        "summary": "Get all posts liked by the current user",
+        "description": "Returns all posts that the currently authenticated user has liked. Corresponds to the 'Liked Posts' filter.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "A list of posts liked by the authenticated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Post" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get all posts",
+        "description": "Fetch all posts with optional query parameters for filtering. Visible to all users (registered or not).",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter posts by category name. Returns only posts associated with the given category.",
+            "required": false,
+            "schema": { "type": "integer", "examples": [9] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of posts matching the filter, or all posts if no filter is applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Post" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a new post",
+        "description": "Creates a new forum post. The post must have a non-empty title and content, and at least one category must be selected. Requires an active session cookie.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content", "categories"],
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "content": { "type": "string", "minLength": 1 },
+                  "categories": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Array of category IDs to associate with the post. One or more categories can be selected.",
+                    "items": { "type": "integer" }
+                  }
+                },
+                "examples": [
+                  {
+                    "title": "My first post",
+                    "content": "This is the body of the post.",
+                    "categories": [3]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Post" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - e.g., empty title, empty content, or no categories selected.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Response" },
+                "examples": {
+                  "emptyTitle": {
+                    "value": { "status": "error", "message": "Post title must not be empty." }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the post.",
+          "schema": { "type": "integer", "examples": [42] }
+        }
+      ],
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get a post by ID",
+        "description": "Returns the full details of a single post, including categories, like/dislike counts, and author. Visible to all users (registered or not).",
+        "responses": {
+          "200": {
+            "description": "A post object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Post" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "patch": {
+        "tags": ["Posts"],
+        "summary": "Update a post",
+        "description": "Updates the title, content, or categories of an existing post. Only the author of the post can perform this action.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "At least one field must be provided.",
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "content": { "type": "string", "minLength": 1 },
+                  "categories": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "type": "integer" }
+                  }
+                },
+                "examples": [
+                  {
+                    "title": "Updated title",
+                    "content": "Updated content.",
+                    "categories": [2]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Post updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Post" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete a post",
+        "description": "Permanently deletes a post and all its associated comments and reactions. Only the author of the post can perform this action.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "204": {
+            "description": "Post deleted successfully. No content returned."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/posts/{id}/reaction": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the post.",
+          "schema": { "type": "integer", "examples": [42] }
+        }
+      ],
+      "put": {
+        "tags": ["Reactions"],
+        "summary": "React to a post (like / dislike)",
+        "description": "Upserts a reaction (like/dislike) on a post for the authenticated user, maintaining toggling behavior. Sending the same reaction type again removes it (toggle). Sending the opposite type switches it. A post cannot be liked and disliked simultaneously by the same user.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReactionType" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reaction registered. Returns the updated post with new like/dislike counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Post" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Reactions"],
+        "summary": "Remove a reaction from a post",
+        "description": "Removes the user's reaction from the post without toggling behavior.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Reaction removed. Returns the updated post with new like/dislike counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Post" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/posts/{id}/comments": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the post.",
+          "schema": { "type": "integer", "examples": [42] }
+        }
+      ],
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Get all comments on a post",
+        "description": "Returns all comments for a given post, including like/dislike counts. Visible to all users (registered or not).",
+        "responses": {
+          "200": {
+            "description": "A list of comments on the post.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Comment" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Create a comment on a post",
+        "description": "Adds a new comment to the specified post. The comment must not be empty. Requires an active session cookie.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "type": "string", "minLength": 1 }
+                },
+                "examples": [{ "content": "Great post!" }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Comment" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - e.g., empty comment content.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Response" },
+                "examples": {
+                  "emptyContent": {
+                    "value": { "status": "error", "message": "Comment content must not be empty." }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/comments/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the comment.",
+          "schema": { "type": "integer", "examples": [7] }
+        }
+      ],
+      "patch": {
+        "tags": ["Comments"],
+        "summary": "Update a comment",
+        "description": "Updates the content of an existing comment. Only the author of the comment can perform this action.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "type": "string", "minLength": 1 }
+                },
+                "examples": [{ "content": "Updated comment text." }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Response" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Comment" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Delete a comment",
+        "description": "Permanently deletes a comment and its associated reactions. Only the author of the comment can perform this action.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "204": {
+            "description": "Comment deleted successfully. No content returned."
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/comments/{id}/reaction": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique ID of the comment.",
+          "schema": { "type": "integer", "examples": [7] }
+        }
+      ],
+      "put": {
+        "tags": ["Reactions"],
+        "summary": "React to a comment (like / dislike)",
+        "description": "Upserts a reaction (like/dislike) on a comment for the authenticated user, maintaining toggling behavior. Sending the same reaction type again removes it (toggle). Sending the opposite type switches it. A comment cannot be liked and disliked simultaneously by the same user.",
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReactionType" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reaction registered. Returns the updated comment with new like/dislike counts.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Comment" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Reactions"],
+        "summary": "Remove a reaction from a comment",
+        "description": "Removes the user's reaction from the comment without toggling behavior.",
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Reaction removed. Returns the updated comment with new like/dislike counts.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Comment" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalServerError" }
+        }
+      }
+    },
+    "/uploads/{filePath}": {
+      "parameters": [
+        {
+          "name": "filePath",
+          "in": "path",
+          "required": true,
+          "description": "The path to the uploaded image file.",
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "tags": ["Uploads"],
+        "summary": "Retrieve an uploaded image",
+        "description": "Returns the requested uploaded image.",
+        "responses": {
+          "200": {
+            "description": "The requested image file.",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  }
+}

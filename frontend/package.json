@@ -1,0 +1,17 @@
+{
+  "name": "forum-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for the Forum project",
+  "keywords": [
+    "forum",
+    "javascript",
+    "vanilla"
+  ],
+  "license": "MIT",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

@@ -1,0 +1,77 @@
+Project Forum {
+  database_type: 'SQLite'
+  Note: 'Database schema for the Forum project'
+}
+
+Table User {
+  ID integer [primary key, increment]
+  UserName varchar [unique, not null]
+  Email varchar [unique, not null]
+  AvatarPath varchar [not null]       // path to the user's profile picture
+  Password varchar [not null]         // Stored as a bcrypt hash
+  CreatedAt datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table Session {
+  ID varchar [primary key]
+  UserID integer [unique, not null, ref: > User.ID]
+  ExpiresAt datetime [not null]
+  CreatedAt datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table Post {
+  ID integer [primary key, increment]
+  UserID integer [not null, ref: > User.ID]
+  Title varchar
+  ImagePath varchar          // relative path to an image
+  Content text [not null]
+  CreatedAt datetime [default: `CURRENT_TIMESTAMP`]
+  UpdatedAt datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table PostReaction {
+  UserID integer [not null, ref: > User.ID]
+  PostID integer [not null, ref: > Post.ID]
+  LikeType integer    // 1 == like, -1 == dislike, or null
+  Emoji varchar       // unicode of the emoji, or null
+  CreatedAt datetime [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (UserID, PostID) [pk]
+  }
+}
+
+Table Comment {
+  ID integer [primary key, increment]
+  UserID integer [not null, ref: > User.ID]
+  PostID integer [not null, ref: > Post.ID]
+  Content text [not null]
+  CreatedAt datetime [default: `CURRENT_TIMESTAMP`]
+  UpdatedAt datetime [default: `CURRENT_TIMESTAMP`]
+}
+
+Table CommentReaction {
+  UserID integer [not null, ref: > User.ID]
+  CommentID integer [not null, ref: > Comment.ID]
+  LikeType integer
+  Emoji varchar
+  CreatedAt datetime [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (UserID, CommentID) [pk]
+  }
+}
+
+Table Category {
+  ID integer [primary key, increment]
+  Name varchar [unique, not null]
+}
+
+Table PostCategory {
+  PostID integer [not null, ref: > Post.ID]
+  CategoryID integer [not null, ref: > Category.ID]
+
+  Indexes {
+    (PostID, CategoryID) [pk]
+  }
+}
