@@ -1,0 +1,446 @@
+{{define "post"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Post.Title}} - Forum</title>
+    <link rel="stylesheet" href="static/styles.css" />
+    <style>
+      :root {
+        --primary: #3b82f6;
+        --primary-dark: #2563eb;
+        --primary-light: #dbeafe;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-700: #374151;
+        --gray-900: #111827;
+        --success: #22c55e;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: var(--gray-50);
+        color: var(--gray-900);
+      }
+
+      .navbar {
+        background: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary);
+      }
+
+      .nav-actions a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+
+      .post-card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+      }
+
+      .post-header {
+        padding: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+      }
+
+      .avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        flex-shrink: 0;
+      }
+
+      .user-meta {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .username {
+        font-weight: 600;
+        color: var(--gray-900);
+        font-size: 1rem;
+      }
+
+      .email {
+        font-size: 0.875rem;
+        color: var(--gray-700);
+      }
+
+      .post-body {
+        padding: 1.5rem;
+      }
+
+      .post-title {
+        font-size: 1.875rem;
+        margin-bottom: 1rem;
+        color: var(--gray-900);
+        line-height: 1.3;
+      }
+
+      .post-content {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--gray-700);
+        white-space: pre-wrap;
+      }
+
+      .post-image {
+        width: 100%;
+        max-height: 500px;
+        object-fit: cover;
+        border-radius: 0.375rem;
+        margin: 1.5rem 0;
+      }
+
+      .post-meta {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+      }
+
+      .post-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        gap: 1rem;
+      }
+
+      .reaction-btn {
+        padding: 0.5rem 1rem;
+        background: var(--gray-100);
+        border: none;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: background 0.2s;
+      }
+
+      .reaction-btn:hover {
+        background: var(--primary-light);
+      }
+
+      .comments-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--gray-200);
+      }
+
+      .comments-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--gray-900);
+      }
+
+      .comment-form {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+      }
+
+      .comment-form textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        font-family: inherit;
+        font-size: 1rem;
+        resize: vertical;
+        min-height: 100px;
+        margin-bottom: 1rem;
+        transition: border-color 0.2s;
+      }
+
+      .comment-form textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+      }
+
+      .comment-form button {
+        padding: 0.75rem 1.5rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .comment-form button:hover {
+        background: var(--primary-dark);
+      }
+
+      .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .comment {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+      }
+
+      .comment-header {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+      }
+
+      .comment-author {
+        font-weight: 600;
+        color: var(--gray-900);
+      }
+
+      .comment-time {
+        color: var(--gray-700);
+      }
+
+      .comment-content {
+        color: var(--gray-900);
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
+      .comment-reactions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .comment-reactions span {
+        padding: 0.25rem 0.5rem;
+        background: var(--gray-100);
+        border-radius: 0.25rem;
+      }
+
+      .no-comments {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-700);
+      }
+
+      .message {
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .message.error {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .message.success {
+        background: #dcfce7;
+        color: var(--success);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="logo">Forum</div>
+      <div class="nav-actions">
+        <a href="/">← Back to Posts</a>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+      <!-- POST -->
+      <div class="post-card">
+        <!-- HEADER -->
+        <div class="post-header">
+          <div
+            class="avatar"
+            style="background-image: url('{{if .Post.Author.AvatarPath}}/{{.Post.Author.AvatarPath}}{{else}}data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ctext x=%2212%22 y=%2220%22 text-anchor=%22middle%22 font-size=%2220%22%3E👤%3C/text%3E%3C/svg%3E{{end}}'); background-size: cover; background-position: center;"
+          ></div>
+          <div class="user-meta">
+            <span class="username">{{.Post.Author.Username}}</span>
+            <span class="email">{{.Post.Author.Email}}</span>
+          </div>
+        </div>
+
+        <!-- BODY -->
+        <div class="post-body">
+          {{if .Post.Title}}
+          <h1 class="post-title">{{.Post.Title}}</h1>
+          {{end}} {{if .Post.ImagePath}}
+          <img src="/{{.Post.ImagePath}}" alt="Post image" class="post-image" />
+          {{end}}
+
+          <div class="post-content">{{.Post.Content}}</div>
+
+          <div class="post-meta">
+            <span>📅 {{.Post.CreatedAt.Format "Jan 02, 2006"}}</span>
+            {{if .Post.Categories}}
+            <span
+              >📌 {{range $i, $cat := .Post.Categories}}{{if $i}},
+              {{end}}{{$cat}}{{end}}</span
+            >
+            {{end}}
+          </div>
+        </div>
+
+        <!-- FOOTER WITH REACTIONS -->
+        <div class="post-footer">
+          {{if .User}}
+          <form
+            method="POST"
+            action="/api/posts/{{.Post.ID}}/reaction"
+            style="margin: 0"
+          >
+            <input type="hidden" name="reaction_type" value="upvote" />
+            <button type="submit" class="reaction-btn">
+              👍 {{.Post.Likes}} Like
+            </button>
+          </form>
+
+          <form
+            method="POST"
+            action="/api/posts/{{.Post.ID}}/reaction"
+            style="margin: 0"
+          >
+            <input type="hidden" name="reaction_type" value="downvote" />
+            <button type="submit" class="reaction-btn">
+              👎 {{.Post.Dislikes}} Dislike
+            </button>
+          </form>
+          {{else}}
+          <button class="reaction-btn">👍 {{.Post.Likes}} Like</button>
+          <button class="reaction-btn">👎 {{.Post.Dislikes}} Dislike</button>
+          {{end}}
+        </div>
+      </div>
+
+      <!-- COMMENTS SECTION -->
+      <div class="comments-section">
+        <h2>💬 Comments ({{len .Comments}})</h2>
+
+        {{if .User}}
+        <div class="comment-form">
+          <form id="commentForm">
+            <div id="message"></div>
+            <textarea
+              id="content"
+              name="content"
+              placeholder="Share your thoughts..."
+              required
+            ></textarea>
+            <button type="submit">Post Comment</button>
+          </form>
+        </div>
+        {{end}} {{if .Comments}}
+        <div class="comments-list">
+          {{range .Comments}}
+          <div class="comment">
+            <div class="comment-header">
+              <span class="comment-author">{{.Author.Username}}</span>
+              <span class="comment-time"
+                >{{.CreatedAt.Format "Jan 02, 2006 15:04"}}</span
+              >
+            </div>
+            <div class="comment-content">{{.Content}}</div>
+            <div class="comment-reactions">
+              <span>👍 {{.Likes}}</span>
+              <span>👎 {{.Dislikes}}</span>
+            </div>
+          </div>
+          {{end}}
+        </div>
+        {{else}}
+        <div class="no-comments">
+          <p>No comments yet</p>
+          {{if not .User}}
+          <p style="margin-top: 0.5rem">
+            <a href="/login" style="color: var(--primary)">Login</a> to comment
+          </p>
+          {{end}}
+        </div>
+        {{end}}
+      </div>
+    </div>
+
+    <script>
+      {{if .User}}
+      document.getElementById('commentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const content = document.getElementById('content').value;
+        const messageDiv = document.getElementById('message');
+
+        try {
+          const response = await fetch('/api/posts/{{.Post.ID}}/comments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            messageDiv.innerHTML = `<div class="message error">❌ ${data.message || 'Failed to post comment'}</div>`;
+            return;
+          }
+
+          messageDiv.innerHTML = '<div class="message success">✓ Comment posted! Reloading...</div>';
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } catch (error) {
+          messageDiv.innerHTML = `<div class="message error">❌ An error occurred: ${error.message}</div>`;
+        }
+      });
+      {{end}}
+    </script>
+  </body>
+</html>
+{{end}}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 
 	"forum/backend/internal/dto"
@@ -12,6 +13,26 @@ import (
 type AuthHandler struct {
 	UserService    UserServicer
 	SessionService SessionServicer
+}
+
+// HandleShowSignUp serves the signup HTML page
+func (h *AuthHandler) HandleShowSignUp(w http.ResponseWriter, r *http.Request) error {
+	tmpl, err := template.ParseFiles("templates/signup.html")
+	if err != nil {
+		return err
+	}
+
+	return safeTemplateExecute(w, tmpl, "signup", nil)
+}
+
+// HandleShowLogin serves the login HTML page
+func (h *AuthHandler) HandleShowLogin(w http.ResponseWriter, r *http.Request) error {
+	tmpl, err := template.ParseFiles("templates/login.html")
+	if err != nil {
+		return err
+	}
+
+	return safeTemplateExecute(w, tmpl, "login", nil)
 }
 
 func (h *AuthHandler) HandleSignUp(w http.ResponseWriter, r *http.Request) error {

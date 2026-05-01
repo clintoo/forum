@@ -1,0 +1,331 @@
+{{define "create"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Post - Forum</title>
+    <link rel="stylesheet" href="static/styles.css" />
+    <style>
+      :root {
+        --primary: #3b82f6;
+        --primary-dark: #2563eb;
+        --primary-light: #dbeafe;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-700: #374151;
+        --gray-900: #111827;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: var(--gray-50);
+        color: var(--gray-900);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        background: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary);
+      }
+
+      .nav-actions {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .nav-actions a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .nav-actions a:hover {
+        color: var(--primary-dark);
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        flex: 1;
+      }
+
+      .form-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-card h1 {
+        font-size: 1.875rem;
+        margin-bottom: 1.5rem;
+        color: var(--gray-900);
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+      }
+
+      input[type="text"],
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        font-family: inherit;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 200px;
+      }
+
+      .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+      }
+
+      .category-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .category-checkbox input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+      }
+
+      .category-checkbox label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: normal;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      button {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button[type="submit"] {
+        background: var(--primary);
+        color: white;
+      }
+
+      button[type="submit"]:hover {
+        background: var(--primary-dark);
+      }
+
+      button[type="submit"]:active {
+        transform: scale(0.98);
+      }
+
+      button[type="reset"] {
+        background: var(--gray-200);
+        color: var(--gray-700);
+      }
+
+      button[type="reset"]:hover {
+        background: var(--gray-300);
+      }
+
+      .message {
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .message.error {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .message.success {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="logo">Forum</div>
+      <div class="nav-actions">
+        <a href="/">← Back to Posts</a>
+      </div>
+    </header>
+
+    <!-- FORM CONTAINER -->
+    <div class="container">
+      <div class="form-card">
+        <h1>✏️ Create a New Post</h1>
+
+        <form id="createPostForm">
+          <div id="message"></div>
+
+          <div class="form-group">
+            <label for="title">Post Title *</label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              placeholder="What's your topic?"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="content">Content *</label>
+            <textarea
+              id="content"
+              name="content"
+              placeholder="Share your thoughts, ideas, or experiences..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="imagePath">Image URL (optional)</label>
+            <input
+              type="text"
+              id="imagePath"
+              name="imagePath"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Categories</label>
+            <div class="categories-grid">
+              {{range .Categories}}
+              <div class="category-checkbox">
+                <input
+                  type="checkbox"
+                  id="cat-{{.ID}}"
+                  name="category_ids"
+                  value="{{.ID}}"
+                />
+                <label for="cat-{{.ID}}">{{.Name}}</label>
+              </div>
+              {{end}}
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit">Publish Post</button>
+            <button type="reset">Clear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("createPostForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const title = document.getElementById("title").value;
+          const content = document.getElementById("content").value;
+          const imagePath = document.getElementById("imagePath").value;
+          const categoryCheckboxes = document.querySelectorAll(
+            'input[name="category_ids"]:checked',
+          );
+          const categoryIds = Array.from(categoryCheckboxes).map((cb) =>
+            parseInt(cb.value),
+          );
+          const messageDiv = document.getElementById("message");
+
+          try {
+            const response = await fetch("/api/posts", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title,
+                content,
+                image_path: imagePath,
+                category_ids: categoryIds,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              messageDiv.innerHTML = `<div class="message error">❌ ${data.message || "Failed to create post"}</div>`;
+              return;
+            }
+
+            messageDiv.innerHTML =
+              '<div class="message success">✓ Post published successfully! Redirecting...</div>';
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 1500);
+          } catch (error) {
+            messageDiv.innerHTML = `<div class="message error">❌ An error occurred: ${error.message}</div>`;
+          }
+        });
+    </script>
+  </body>
+</html>
+{{end}}

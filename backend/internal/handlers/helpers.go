@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -86,4 +88,17 @@ func getURLParamInt(r *http.Request, param string) (int, error) {
 	}
 
 	return val, nil
+}
+
+// safeTemplateExecute executes a template with buffering to prevent partial writes on error.
+// This prevents the "superfluous response.WriteHeader call" error when template execution fails.
+func safeTemplateExecute(w http.ResponseWriter, t *template.Template, name string, data any) error {
+	var buf bytes.Buffer
+	if err := t.ExecuteTemplate(&buf, name, data); err != nil {
+		return err
+	}
+	// If template executed successfully, write to response
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, err := buf.WriteTo(w)
+	return err
 }
