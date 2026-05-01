@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 
 	"forum/backend/internal/dto"
@@ -12,9 +13,77 @@ import (
 )
 
 type ContentHandler struct {
+	UserService     UserServicer
+	SessionService  SessionServicer
 	PostService     PostServicer
 	CommentService  CommentServicer
 	ReactionService ReactionServicer
+}
+
+func (h *ContentHandler) HandleHome(w http.ResponseWriter, r *http.Request) error {
+	posts, err := h.PostService.GetAllPosts()
+	if err != nil {
+		return err
+	}
+
+	categories, err := h.PostService.GetAllCategories()
+	if err != nil {
+		return err
+	}
+
+	// Extract category names for the template
+	categoryNames := make([]string, len(categories))
+	for i, cat := range categories {
+		categoryNames[i] = cat.Name
+	}
+
+	// Enrich posts with author information so the template can render user details.
+	postDTOs := make([]dto.Post, len(posts))
+	for i, post := range posts {
+		author, _ := h.UserService.GetUserByID(post.UserID)
+		postDTOs[i] = dto.ToPostWithAuthor(&post, author)
+	}
+
+	tmpl, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		return err
+	}
+
+	// Get user from context first (if using auth middleware), otherwise check session cookie
+	var user *models.User
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		// No user in context, check for session cookie (for public routes)
+		cookie, err := r.Cookie("session_token")
+		if err == nil && cookie.Value != "" {
+			// Validate the session
+			id, validSession := h.SessionService.ValidateSession(cookie.Value)
+			if validSession && id > 0 {
+				userID = id
+				ok = true
+			}
+		}
+	}
+
+	if ok && userID > 0 {
+		user, err = h.UserService.GetMe(userID)
+		if err != nil {
+			// Log but don't fail the page load
+			user = nil
+		}
+	}
+
+	data := struct {
+		User       *models.User
+		Posts      []dto.Post
+		Categories []string
+	}{
+		User:       user,
+		Posts:      postDTOs,
+		Categories: categoryNames,
+	}
+
+	return safeTemplateExecute(w, tmpl, "index", data)
 }
 
 // --- Posts ---
@@ -25,7 +94,14 @@ func (h *ContentHandler) HandleGetPosts(w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 
-	writeSuccess(w, http.StatusOK, "posts retrieved successfully", dto.ToPosts(posts))
+	// Enrich posts with author information
+	dtos := make([]dto.Post, len(posts))
+	for i, post := range posts {
+		author, _ := h.UserService.GetUserByID(post.UserID)
+		dtos[i] = dto.ToPostWithAuthor(&post, author)
+	}
+
+	writeSuccess(w, http.StatusOK, "posts retrieved successfully", dtos)
 	return nil
 }
 
@@ -289,11 +365,6 @@ func (h *ContentHandler) HandleReactToComment(w http.ResponseWriter, r *http.Req
 		return services.NewValidationError("invalid user ID in context")
 	}
 
-	postID, err := getURLParamInt(r, "id")
-	if err != nil {
-		return err
-	}
-
 	commentID, err := getURLParamInt(r, "id")
 	if err != nil {
 		return err
@@ -307,7 +378,7 @@ func (h *ContentHandler) HandleReactToComment(w http.ResponseWriter, r *http.Req
 		return services.NewValidationError("invalid request body")
 	}
 
-	comment, err := h.ReactionService.ReactToComment(userID, postID, commentID, req.ReactionType)
+	comment, err := h.ReactionService.ReactToComment(userID, 0, commentID, req.ReactionType)
 	if err != nil {
 		return err
 	}

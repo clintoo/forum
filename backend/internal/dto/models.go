@@ -34,6 +34,7 @@ func (Comment) IsDTO() {}
 
 type Post struct {
 	ID           int        `json:"id"`
+	Title        string     `json:"title"`
 	Content      string     `json:"content"`
 	ImagePath    string     `json:"image_path,omitempty"`
 	Author       PublicUser `json:"author"`
@@ -76,6 +77,7 @@ func (Session) IsDTO() {}
 type PublicUser struct {
 	ID         int       `json:"id"`
 	Username   string    `json:"username"`
+	Email      string    `json:"email"`
 	AvatarPath string    `json:"avatar_path"`
 	CreatedAt  time.Time `json:"created_at"`
 }

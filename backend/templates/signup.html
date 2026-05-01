@@ -1,0 +1,303 @@
+{{define "signup"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - Forum</title>
+    <link rel="stylesheet" href="static/styles.css" />
+    <style>
+      :root {
+        --primary: #3b82f6;
+        --primary-dark: #2563eb;
+        --primary-light: #dbeafe;
+        --danger: #ef4444;
+        --gray-100: #f3f4f6;
+        --gray-700: #374151;
+        --gray-900: #111827;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-dark) 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        background: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary);
+      }
+
+      .nav-actions a {
+        margin-left: 1rem;
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+
+      .nav-actions a:hover {
+        color: var(--primary-dark);
+      }
+
+      .auth-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+      }
+
+      .auth-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .auth-card h1 {
+        font-size: 1.875rem;
+        margin-bottom: 0.5rem;
+        color: var(--gray-900);
+      }
+
+      .auth-card p {
+        color: var(--gray-700);
+        margin-bottom: 2rem;
+        font-size: 0.875rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--gray-900);
+        font-weight: 500;
+        font-size: 0.875rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+      }
+
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: var(--primary-dark);
+      }
+
+      .auth-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.875rem;
+      }
+
+      .auth-link a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .auth-link a:hover {
+        text-decoration: underline;
+      }
+
+      .error {
+        background: #fee2e2;
+        color: var(--danger);
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .success {
+        background: #dcfce7;
+        color: #22c55e;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="logo">Forum</div>
+      <div class="nav-actions">
+        <a href="/">Home</a>
+        <a href="/login">Login</a>
+      </div>
+    </header>
+
+    <!-- AUTH CONTAINER -->
+    <div class="auth-container">
+      <div class="auth-card">
+        <h1>Create Account</h1>
+        <p>Join our forum community</p>
+
+        <form id="signupForm">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Choose your username"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="At least 6 characters"
+              required
+              minlength="6"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="passwordConfirm">Confirm Password</label>
+            <input
+              type="password"
+              id="passwordConfirm"
+              name="passwordConfirm"
+              placeholder="Confirm your password"
+              required
+              minlength="6"
+            />
+          </div>
+
+          <div id="message"></div>
+
+          <button type="submit">Sign Up</button>
+        </form>
+
+        <div class="auth-link">
+          Already have an account? <a href="/login">Login here</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value;
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+          const passwordConfirm =
+            document.getElementById("passwordConfirm").value;
+          const messageDiv = document.getElementById("message");
+
+          // Client-side validation
+          if (password !== passwordConfirm) {
+            messageDiv.innerHTML =
+              '<div class="error">Passwords do not match</div>';
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/auth/signup", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                username,
+                password,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              messageDiv.innerHTML = `<div class="error">${data.message || "Signup failed"}</div>`;
+              return;
+            }
+
+            messageDiv.innerHTML =
+              '<div class="success">Account created! Redirecting...</div>';
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 1500);
+          } catch (error) {
+            messageDiv.innerHTML = `<div class="error">An error occurred: ${error.message}</div>`;
+          }
+        });
+    </script>
+  </body>
+</html>
+{{end}}

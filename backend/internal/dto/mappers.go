@@ -7,6 +7,7 @@ func ToPublicUser(u *models.User) PublicUser {
 	return PublicUser{
 		ID:         u.ID,
 		Username:   u.Username,
+		Email:      u.Email,
 		AvatarPath: u.AvatarPath,
 		CreatedAt:  u.CreatedAt,
 	}
@@ -37,6 +38,33 @@ func ToCategories(cats []models.Category) []Category {
 	return result
 }
 
+// ToPostWithAuthor converts a domain Post to its transport representation with author details.
+func ToPostWithAuthor(p *models.Post, author *models.User) Post {
+	cats := make([]Category, len(p.Categories))
+	for i, name := range p.Categories {
+		cats[i] = Category{Name: name}
+	}
+
+	authorDTO := PublicUser{ID: p.UserID}
+	if author != nil {
+		authorDTO = ToPublicUser(author)
+	}
+
+	return Post{
+		ID:           p.ID,
+		Title:        p.Title,
+		Content:      p.Content,
+		ImagePath:    p.ImagePath,
+		Author:       authorDTO,
+		Categories:   cats,
+		Likes:        p.Likes,
+		Dislikes:     p.Dislikes,
+		CommentCount: p.CommentCount,
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
+	}
+}
+
 // ToPost converts a domain Post to its transport representation.
 // Categories are mapped by name only since domain queries return names, not IDs.
 func ToPost(p *models.Post) Post {
@@ -47,13 +75,17 @@ func ToPost(p *models.Post) Post {
 	}
 
 	return Post{
-		ID:         p.ID,
-		ImagePath:  p.ImagePath,
-		Content:    p.Content,
-		Author:     PublicUser{ID: p.UserID},
-		Categories: cats,
-		CreatedAt:  p.CreatedAt,
-		UpdatedAt:  p.UpdatedAt,
+		ID:           p.ID,
+		Title:        p.Title,
+		Content:      p.Content,
+		ImagePath:    p.ImagePath,
+		Author:       PublicUser{ID: p.UserID},
+		Categories:   cats,
+		Likes:        p.Likes,
+		Dislikes:     p.Dislikes,
+		CommentCount: p.CommentCount,
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
 	}
 }
 
@@ -86,6 +118,25 @@ func ToComments(comments []models.Comment) []Comment {
 	}
 
 	return result
+}
+
+// ToCommentWithAuthor converts a domain Comment to its transport representation with author details.
+func ToCommentWithAuthor(c *models.Comment, author *models.User) Comment {
+	authorDTO := PublicUser{ID: c.UserID}
+	if author != nil {
+		authorDTO = ToPublicUser(author)
+	}
+
+	return Comment{
+		ID:        c.ID,
+		PostID:    c.PostID,
+		Author:    authorDTO,
+		Content:   c.Content,
+		Likes:     0,
+		Dislikes:  0,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
+	}
 }
 
 // ToPublicUsers converts a slice of domain Users to transport representations.

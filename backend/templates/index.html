@@ -1,0 +1,731 @@
+{{define "index"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forum</title>
+    <link rel="stylesheet" href="static/styles.css" />
+    <style>
+      :root {
+        --primary: #3b82f6;
+        --primary-dark: #2563eb;
+        --primary-light: #dbeafe;
+        --danger: #ef4444;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-700: #374151;
+        --gray-900: #111827;
+        --success: #22c55e;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: var(--gray-50);
+        color: var(--gray-900);
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+
+      /* NAVBAR */
+      .navbar {
+        background: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary);
+      }
+
+      .nav-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .nav-actions a,
+      .nav-actions button {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 1rem;
+        transition: color 0.2s;
+      }
+
+      .nav-actions a:hover,
+      .nav-actions button:hover {
+        color: var(--primary-dark);
+      }
+
+      .btn-create {
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: background 0.2s;
+      }
+
+      .btn-create:hover {
+        background: var(--primary-dark);
+      }
+
+      /* FILTERS */
+      .filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .filter {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 999px;
+        color: var(--gray-700);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+      }
+
+      .filter:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      /* CREATE POST FORM */
+      .create-post {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+      }
+
+      .create-post h3 {
+        margin-bottom: 1rem;
+        font-size: 1.125rem;
+        color: var(--gray-900);
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+      }
+
+      input[type="text"],
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        font-family: inherit;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-light);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+      }
+
+      .category-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .category-checkbox input[type="checkbox"] {
+        width: auto;
+        cursor: pointer;
+      }
+
+      .category-checkbox label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: normal;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      button[type="submit"] {
+        flex: 1;
+        padding: 0.75rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button[type="submit"]:hover {
+        background: var(--primary-dark);
+      }
+
+      button[type="reset"] {
+        padding: 0.75rem 1.5rem;
+        background: var(--gray-200);
+        color: var(--gray-700);
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button[type="reset"]:hover {
+        background: var(--gray-300);
+      }
+
+      .message {
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .message.error {
+        background: #fee2e2;
+        color: var(--danger);
+      }
+
+      .message.success {
+        background: #dcfce7;
+        color: var(--success);
+      }
+
+      /* POSTS */
+      .posts {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .post {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: box-shadow 0.2s;
+      }
+
+      .post:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .post-header {
+        padding: 1rem;
+        display: flex;
+        gap: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+      }
+
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        flex-shrink: 0;
+      }
+
+      .user-meta {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .username {
+        font-weight: 600;
+        color: var(--gray-900);
+      }
+
+      .email {
+        font-size: 0.875rem;
+        color: var(--gray-700);
+      }
+
+      .post-body {
+        padding: 1rem;
+      }
+
+      .post-text {
+        line-height: 1.6;
+        color: var(--gray-900);
+      }
+
+      .post-image {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: cover;
+      }
+
+      .post-footer {
+        padding: 1rem;
+        border-top: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .reactions-left,
+      .reactions-right {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .reactions-left form,
+      .reactions-left span,
+      .reactions-right a {
+        padding: 0.5rem 0.75rem;
+        background: var(--gray-100);
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background 0.2s;
+        border: none;
+        text-decoration: none;
+        color: var(--gray-700);
+      }
+
+      .reactions-left form:hover,
+      .reactions-right a:hover {
+        background: var(--primary-light);
+      }
+
+      .no-posts {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--gray-700);
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--gray-200);
+        margin: 2rem 0;
+      }
+
+      /* MODAL */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal.open {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        padding-bottom: 1rem;
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        color: var(--gray-900);
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--gray-700);
+        transition: color 0.2s;
+      }
+
+      .modal-close:hover {
+        color: var(--gray-900);
+      }
+
+      .btn-create-post {
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+
+      .btn-create-post:hover {
+        background: var(--primary-dark);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <header class="navbar">
+      <div class="logo">Forum</div>
+
+      <div class="nav-actions">
+        {{if .User}}
+        <button class="btn-create-post" onclick="openCreatePostModal()">
+          ✏️ Create Post
+        </button>
+        <span style="color: var(--gray-700); font-size: 0.875rem"
+          >@{{.User.Username}}</span
+        >
+        <form method="POST" action="/logout" style="margin: 0">
+          <button type="submit">Logout</button>
+        </form>
+        {{else}}
+        <a href="/login">Login</a>
+        <a href="/signup">Signup</a>
+        {{end}}
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+      <!-- CREATE POST MODAL -->
+      {{if .User}}
+      <div id="createPostModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>✏️ Create a New Post</h2>
+            <button class="modal-close" onclick="closeCreatePostModal()">
+              ×
+            </button>
+          </div>
+
+          <form id="createPostForm">
+            <div id="message"></div>
+
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                placeholder="What's on your mind?"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="content">Content</label>
+              <textarea
+                id="content"
+                name="content"
+                placeholder="Share your thoughts..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="imagePath">Image URL (optional)</label>
+              <input
+                type="text"
+                id="imagePath"
+                name="imagePath"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Categories</label>
+              <div class="categories-grid">
+                {{range .Categories}}
+                <div class="category-checkbox">
+                  <input
+                    type="checkbox"
+                    id="cat-{{.}}"
+                    name="category_ids"
+                    value="{{.}}"
+                  />
+                  <label for="cat-{{.}}">{{.}}</label>
+                </div>
+                {{end}}
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit">Publish Post</button>
+              <button type="reset">Clear</button>
+              <button
+                type="button"
+                onclick="closeCreatePostModal()"
+                style="background: var(--gray-200); color: var(--gray-700)"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {{end}}
+
+      <!-- CATEGORY FILTERS -->
+      <div class="filters">
+        <!-- Public filters -->
+        <a href="/?filter=all" class="filter">📌 All Posts</a>
+
+        {{range .Categories}}
+        <a href="/?category={{.}}" class="filter">{{.}}</a>
+        {{end}}
+
+        <!-- Logged-in only -->
+        {{if .User}}
+        <a href="/?filter=my-posts" class="filter">👤 My Posts</a>
+        <a href="/?filter=liked" class="filter">❤️ Liked</a>
+        {{end}}
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- POSTS SECTION -->
+      <div class="posts">
+        {{if .Posts}} {{range .Posts}}
+        <article class="post">
+          <!-- USER -->
+          <div class="post-header">
+            <div
+              class="avatar"
+              style="background-image: url('{{if .Author.AvatarPath}}/{{.Author.AvatarPath}}{{else}}data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ctext x=%2212%22 y=%2220%22 text-anchor=%22middle%22 font-size=%2220%22%3E👤%3C/text%3E%3C/svg%3E{{end}}'); background-size: cover; background-position: center;"
+            ></div>
+            <div class="user-meta">
+              <span class="username">{{.Author.Username}}</span>
+              <span class="email">{{.Author.Email}}</span>
+            </div>
+          </div>
+
+          <!-- TITLE & CONTENT -->
+          <div class="post-body">
+            {{if .Title}}
+            <h4 style="margin-bottom: 0.5rem; color: var(--primary)">
+              {{.Title}}
+            </h4>
+            {{end}}
+            <p class="post-text">{{.Content}}</p>
+          </div>
+
+          <!-- IMAGE -->
+          {{if .ImagePath}}
+          <div style="padding: 0 1rem">
+            <img src="/{{.ImagePath}}" class="post-image" alt="Post image" />
+          </div>
+          {{end}}
+
+          <!-- REACTIONS & COMMENTS -->
+          <div class="post-footer">
+            <div class="reactions-left">
+              {{if $.User}}
+              <form
+                method="POST"
+                action="/api/posts/{{.ID}}/reaction"
+                style="margin: 0; padding: 0.5rem 0.75rem"
+              >
+                <input type="hidden" name="reaction_type" value="upvote" />
+                <button
+                  type="submit"
+                  style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 0;
+                    color: inherit;
+                  "
+                >
+                  👍 {{.Likes}}
+                </button>
+              </form>
+
+              <form
+                method="POST"
+                action="/api/posts/{{.ID}}/reaction"
+                style="margin: 0; padding: 0.5rem 0.75rem"
+              >
+                <input type="hidden" name="reaction_type" value="downvote" />
+                <button
+                  type="submit"
+                  style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 0;
+                    color: inherit;
+                  "
+                >
+                  👎 {{.Dislikes}}
+                </button>
+              </form>
+              {{else}}
+              <span>👍 {{.Likes}}</span>
+              <span>👎 {{.Dislikes}}</span>
+              {{end}}
+            </div>
+
+            <div class="reactions-right">
+              <a
+                href="/posts/{{.ID}}"
+                style="text-decoration: none; color: var(--gray-700)"
+              >
+                💬 {{.CommentCount}} Comments
+              </a>
+            </div>
+          </div>
+        </article>
+        {{end}} {{else}}
+        <div class="no-posts">
+          <p style="font-size: 1.125rem; margin-bottom: 0.5rem">No posts yet</p>
+          <p style="color: var(--gray-700)">
+            Be the first to share something! {{if not .User}}<a
+              href="/signup"
+              style="color: var(--primary)"
+              >Sign up</a
+            >
+            to get started.{{end}}
+          </p>
+        </div>
+        {{end}}
+      </div>
+    </div>
+
+    <script>
+      /* Modal Functions */
+      function openCreatePostModal() {
+        document.getElementById('createPostModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeCreatePostModal() {
+        document.getElementById('createPostModal').classList.remove('open');
+        document.body.style.overflow = 'auto';
+        document.getElementById('createPostForm').reset();
+        document.getElementById('message').innerHTML = '';
+      }
+
+      /* Close modal when clicking outside the content */
+      document.getElementById('createPostModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'createPostModal') {
+          closeCreatePostModal();
+        }
+      });
+
+      {{if .User}}
+      document.getElementById('createPostForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+        const imagePath = document.getElementById('imagePath').value;
+        const categoryCheckboxes = document.querySelectorAll('input[name="category_ids"]:checked');
+        const categoryIds = Array.from(categoryCheckboxes).map(cb => parseInt(cb.value));
+        const messageDiv = document.getElementById('message');
+
+        try {
+          const response = await fetch('/api/posts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              title,
+              content,
+              image_path: imagePath,
+              category_ids: categoryIds,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            messageDiv.innerHTML = `<div class="message error">${data.message || 'Failed to create post'}</div>`;
+            return;
+          }
+
+          messageDiv.innerHTML = '<div class="message success">✓ Post published! Reloading...</div>';
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } catch (error) {
+          messageDiv.innerHTML = `<div class="message error">An error occurred: ${error.message}</div>`;
+        }
+      });
+      {{end}}
+    </script>
+  </body>
+</html>
+{{end}}

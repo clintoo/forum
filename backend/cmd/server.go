@@ -36,6 +36,8 @@ func NewServer(db *database.SQLiteStore) *Server {
 		UserService: userService,
 	}
 	contentHandler := &handlers.ContentHandler{
+		UserService:     userService,
+		SessionService:  sessionService,
 		PostService:     postService,
 		CommentService:  commentService,
 		ReactionService: reactionService,
@@ -46,8 +48,17 @@ func NewServer(db *database.SQLiteStore) *Server {
 
 	mux := http.NewServeMux()
 
+
+	// Web (HTML)
+	mux.HandleFunc("GET /", handlers.ErrorHandlerAdapter(contentHandler.HandleHome))
+	mux.HandleFunc("GET /signup", handlers.ErrorHandlerAdapter(authHandler.HandleShowSignUp))
+	mux.HandleFunc("GET /login", handlers.ErrorHandlerAdapter(authHandler.HandleShowLogin))
+
+	// Static assets
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
 	// Static file serving for user-uploaded images (outside /api)
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	// Auth
 	mux.HandleFunc("POST /api/auth/signup", handlers.ErrorHandlerAdapter(authHandler.HandleSignUp))
